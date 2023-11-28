@@ -5,6 +5,7 @@
 #include "YYRValue.h"
 #include "steam_common.h"
 #include <sstream>
+#include <GMLSteam/gml_glue.h>
 
 class CLeaderboardFindHandler;
 class CLeaderboardUploadHandler;
@@ -1733,6 +1734,61 @@ YYEXPORT void /*double*/ steam_reset_all_stats_achievements(RValue& Result, CIns
     Result.val = 0.0;
     return;
 }
+
+static CCallResult<steam_net_callbacks_t, UserStatsReceived_t> _steam_user_request_stats;
+/// double(int64 user_id)
+/// https://partner.steamgames.com/doc/api/ISteamUserStats#RequestUserStats
+YYEXPORT void steam_user_request_stats(RValue& Result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg) {
+    auto userID64 = (uint64_t)YYGetInt64(arg, 0);
+    CSteamID userID(userID64);
+    Result.kind = VALUE_REAL;
+    if (!steam_is_initialised || SteamUserStats() == nullptr) {
+        Result.val = -1;
+        return;
+    }
+    auto call = SteamUserStats()->RequestUserStats(userID);
+    if (call == k_uAPICallInvalid) {
+        Result.val = 0;
+        return;
+    }
+    Result.val = 1;
+    _steam_user_request_stats.Set(call, &steam_net_callbacks, &steam_net_callbacks_t::user_stats_received);
+}
+void steam_net_callbacks_t::user_stats_received(UserStatsReceived_t* e, bool failed) {
+    steam_net_event r = steam_net_event((char*)"user_stats_received");
+    r.set_result(e->m_eResult);
+    r.set_steamid_all("user_id", e->m_steamIDUser);
+    r.set_uint64_all("game_id", e->m_nGameID);
+    r.dispatch();
+}
+
+YYEXPORT void steam_user_get_stat_int(RValue& Result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg) {
+    auto userID64 = (uint64_t)YYGetInt64(arg, 0);
+    auto statName = YYGetString(arg, 1);
+    CSteamID userID(userID64);
+    int32_t result = 0;
+    if (!steam_is_initialised || SteamUserStats() == nullptr || !SteamUserStats()->GetUserStat(userID, statName, &result)) {
+        Result.kind = VALUE_UNDEFINED;
+        Result.ptr = nullptr;
+        return;
+    }
+    Result.kind = VALUE_REAL;
+    Result.val = result;
+}
+YYEXPORT void steam_user_get_stat_float(RValue& Result, CInstance* selfinst, CInstance* otherinst, int argc, RValue* arg) {
+    auto userID64 = (uint64_t)YYGetInt64(arg, 0);
+    auto statName = YYGetString(arg, 1);
+    CSteamID userID(userID64);
+    float result = 0;
+    if (!steam_is_initialised || SteamUserStats() == nullptr || !SteamUserStats()->GetUserStat(userID, statName, &result)) {
+        Result.kind = VALUE_UNDEFINED;
+        Result.ptr = nullptr;
+        return;
+    }
+    Result.kind = VALUE_REAL;
+    Result.val = result;
+}
+
 
 void Steam_UserStats_Init()
 {

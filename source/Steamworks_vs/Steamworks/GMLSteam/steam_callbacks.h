@@ -21,6 +21,7 @@ public:
 	STEAM_CALLBACK(steam_net_callbacks_t, steam_inventory_definition_update, SteamInventoryDefinitionUpdate_t);
 	STEAM_CALLBACK(steam_net_callbacks_t, avatar_image_loaded, AvatarImageLoaded_t);
 
+	void user_stats_received(UserStatsReceived_t* e, bool failed);
 	void lobby_list_received(LobbyMatchList_t* e, bool failed);
 	void lobby_created(LobbyCreated_t* e, bool failed);
 	void lobby_joined(LobbyEnter_t* e, bool failed);
