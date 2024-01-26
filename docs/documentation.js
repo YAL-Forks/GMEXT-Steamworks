@@ -22,11 +22,13 @@
  * @ref module.cloud
  * @ref module.DLC
  * @ref module.UGC
+ * @ref module.lobbies
  * @ref module.social
  * @ref module.inventory
  * @ref module.networking
  * @ref module.input
  * @ref module.utilities
+ * @ref module.music
  * @section_end
  * 
  * @module_end
